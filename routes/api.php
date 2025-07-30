@@ -2,26 +2,29 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\UserAuthController;
-use App\Http\Controllers\Auth\MemberAuthController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\MemberController;
 use Illuminate\Http\Request;
+
+// routes/api.php
 
 
 Route::post('/login-user', [UserAuthController::class, 'login']);
-//Route::post('/login-member', [MemberAuthController::class, 'login']);
 Route::post('/register-user', [RegisterController::class, 'registerUser']);
 Route::middleware('auth:sanctum')->post('/register-member', [RegisterController::class, 'registerMember']);
-// routes/api.php
+
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user-profile', function (Request $request) {
         return $request->user();
     });
 
-    Route::get('/member-profile', function (Request $request) {
-        return $request->user(); // ini bisa user atau member tergantung token
-    });
+    // Member management
+    Route::get('/members', [MemberController::class, 'index']);
+    Route::get('/members/{id}', [MemberController::class, 'show']);
+    Route::put('/members/{id}', [MemberController::class, 'update']);
+    Route::delete('/members/{id}', [MemberController::class, 'destroy']);
 
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::post('/transactions', [TransactionController::class, 'store']);

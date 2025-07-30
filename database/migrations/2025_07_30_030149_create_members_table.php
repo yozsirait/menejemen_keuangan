@@ -16,10 +16,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('name');
-            $table->string('role')->nullable(); // misal: "ayah", "anak", dll
-            $table->string('email')->unique()->nullable();
-            $table->string('password')->nullable(); // untuk login member (jika diperlukan)
+            $table->string('role')->nullable();
             $table->timestamps();
+
         });
     }
 

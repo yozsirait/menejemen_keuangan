@@ -9,6 +9,11 @@ class Member extends Model
 {
     //
     use HasApiTokens;
+    protected $fillable = [
+        'user_id',
+        'name',
+        'role',
+    ];
 
     public function user()
     {
