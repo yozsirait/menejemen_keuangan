@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\UserAuthController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\CategoryController;
 use Illuminate\Http\Request;
 
 // routes/api.php
@@ -13,7 +14,9 @@ use Illuminate\Http\Request;
 Route::post('/login-user', [UserAuthController::class, 'login']);
 Route::post('/register-user', [RegisterController::class, 'registerUser']);
 Route::middleware('auth:sanctum')->post('/register-member', [RegisterController::class, 'registerMember']);
-
+Route::middleware('auth:sanctum')->get('/debug-user', function (Request $request) {
+    return response()->json($request->user());
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user-profile', function (Request $request) {
@@ -21,14 +24,12 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Member management
-    Route::get('/members', [MemberController::class, 'index']);
-    Route::get('/members/{id}', [MemberController::class, 'show']);
-    Route::put('/members/{id}', [MemberController::class, 'update']);
-    Route::delete('/members/{id}', [MemberController::class, 'destroy']);
+    Route::apiResource('members', MemberController::class);
 
-    Route::get('/transactions', [TransactionController::class, 'index']);
-    Route::post('/transactions', [TransactionController::class, 'store']);
-    Route::get('/transactions/{id}', [TransactionController::class, 'show']);
-    Route::put('/transactions/{id}', [TransactionController::class, 'update']);
-    Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);
+    // Transaction management
+    Route::apiResource('transactions', TransactionController::class);
+    
+    // Category management
+    Route::apiResource('categories', CategoryController::class);
+
 });
