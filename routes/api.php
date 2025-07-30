@@ -8,12 +8,14 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\BudgetController;
+use App\Http\Controllers\DashboardSummaryController;
 use Illuminate\Http\Request;
 
 // routes/api.php
 
 
 Route::post('/login-user', [UserAuthController::class, 'login']);
+Route::middleware('auth:sanctum')->post('/logout-user', [UserAuthController::class, 'logout']);
 Route::post('/login-member', [MemberAuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout-member', [MemberAuthController::class, 'logout']);
 Route::post('/register-user', [RegisterController::class, 'registerUser']);
@@ -47,4 +49,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Budget management
     Route::apiResource('/budgets', BudgetController::class);
+
+    Route::middleware('auth:sanctum')->get('/dashboard/summary', [DashboardSummaryController::class, 'index']);
 });
