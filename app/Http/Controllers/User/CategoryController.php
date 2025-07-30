@@ -10,7 +10,17 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        return Category::where('user_id', $request->user()->id)->get();
+        $user = $request->user();
+
+        $type = $request->query('type'); // optional filter
+
+        $query = Category::where('user_id', $user->id);
+
+        if ($type) {
+            $query->where('type', $type);
+        }
+
+        return $query->get();
     }
 
     public function store(Request $request)

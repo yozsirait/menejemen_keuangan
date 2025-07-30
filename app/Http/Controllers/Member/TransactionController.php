@@ -6,9 +6,17 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Transaction;
 use App\Models\Account;
+use App\Services\AccountBalanceService;
 
 class TransactionController extends Controller
 {
+    protected $balanceService;
+
+    public function __construct(AccountBalanceService $balanceService)
+    {
+        $this->balanceService = $balanceService;
+    }
+
     public function index(Request $request)
     {
         $member = $request->user();
@@ -29,13 +37,14 @@ class TransactionController extends Controller
             'account_id' => 'nullable|exists:accounts,id',
             'type' => 'required|in:income,expense',
             'category' => 'required|string',
-            'amount' => 'required|numeric|min:0',
+            'amount' => 'required|numeric',
             'description' => 'nullable|string',
             'date' => 'required|date',
         ]);
 
-        if ($validated['account_id'] ?? false) {
-            Account::where('id', $validated['account_id'])
+        $account = null;
+        if ($request->account_id) {
+            $account = Account::where('id', $request->account_id)
                 ->where('member_id', $member->id)
                 ->firstOrFail();
         }
@@ -43,26 +52,19 @@ class TransactionController extends Controller
         $transaction = Transaction::create([
             'user_id' => $member->user_id,
             'member_id' => $member->id,
-            'account_id' => $validated['account_id'] ?? null,
-            'type' => $validated['type'],
-            'category' => $validated['category'],
-            'amount' => $validated['amount'],
-            'description' => $validated['description'] ?? null,
-            'date' => $validated['date'],
+            'account_id' => $request->account_id,
+            'type' => $request->type,
+            'category' => $request->category,
+            'amount' => $request->amount,
+            'description' => $request->description,
+            'date' => $request->date,
         ]);
 
+        if ($account) {
+            $this->balanceService->applyTransaction($account, $transaction->type, $transaction->amount);
+        }
+
         return response()->json($transaction, 201);
-    }
-
-    public function show(Request $request, $id)
-    {
-        $member = $request->user();
-
-        $transaction = Transaction::where('id', $id)
-            ->where('member_id', $member->id)
-            ->firstOrFail();
-
-        return response()->json($transaction);
     }
 
     public function update(Request $request, $id)
@@ -73,6 +75,10 @@ class TransactionController extends Controller
             ->where('member_id', $member->id)
             ->firstOrFail();
 
+        $oldAmount = $transaction->amount;
+        $oldType = $transaction->type;
+        $oldAccountId = $transaction->account_id;
+
         $validated = $request->validate([
             'account_id' => 'nullable|exists:accounts,id',
             'type' => 'sometimes|in:income,expense',
@@ -82,13 +88,27 @@ class TransactionController extends Controller
             'date' => 'sometimes|date',
         ]);
 
-        if (isset($validated['account_id'])) {
-            Account::where('id', $validated['account_id'])
+        // Revert old balance
+        if ($oldAccountId) {
+            $oldAccount = Account::where('id', $oldAccountId)
                 ->where('member_id', $member->id)
-                ->firstOrFail();
+                ->first();
+            if ($oldAccount) {
+                $this->balanceService->revertTransaction($oldAccount, $oldType, $oldAmount);
+            }
         }
 
         $transaction->update($validated);
+
+        // Apply new balance
+        if ($transaction->account_id) {
+            $newAccount = Account::where('id', $transaction->account_id)
+                ->where('member_id', $member->id)
+                ->first();
+            if ($newAccount) {
+                $this->balanceService->applyTransaction($newAccount, $transaction->type, $transaction->amount);
+            }
+        }
 
         return response()->json($transaction);
     }
@@ -100,6 +120,15 @@ class TransactionController extends Controller
         $transaction = Transaction::where('id', $id)
             ->where('member_id', $member->id)
             ->firstOrFail();
+
+        if ($transaction->account_id) {
+            $account = Account::where('id', $transaction->account_id)
+                ->where('member_id', $member->id)
+                ->first();
+            if ($account) {
+                $this->balanceService->revertTransaction($account, $transaction->type, $transaction->amount);
+            }
+        }
 
         $transaction->delete();
 

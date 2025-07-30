@@ -14,10 +14,10 @@ use Illuminate\Http\Request;
 
 // routes/api.php
 Route::post('/login-member', [MemberAuthController::class, 'login']);
-Route::middleware('auth:sanctum')->post('/logout-member', [MemberAuthController::class, 'logout']);
+Route::middleware('auth:member')->post('/logout-member', [MemberAuthController::class, 'logout']);
 
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:member')->group(function () {
     Route::get('/member-profile', function (Request $request) {
         return $request->user();
     });
@@ -25,14 +25,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Transaction management
     Route::apiResource('transactions', TransactionController::class);
     
-    // Category management
-    Route::apiResource('categories', CategoryController::class);
-
-    // Budget management
-    Route::apiResource('/budgets', BudgetController::class);
-
     // Account management
     Route::apiResource('/accounts', AccountController::class);
-
-    Route::middleware('auth:sanctum')->get('/dashboard/summary', [DashboardSummaryController::class, 'index']);
 });

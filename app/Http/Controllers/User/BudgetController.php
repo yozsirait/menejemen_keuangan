@@ -11,8 +11,13 @@ class BudgetController extends Controller
 {
     public function index(Request $request)
     {
+        $user = $request->user();
+
+        $month = $request->query('month') ?? now()->format('Y-m');
+
         return Budget::with('category')
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
+            ->where('month', $month)
             ->get();
     }
 

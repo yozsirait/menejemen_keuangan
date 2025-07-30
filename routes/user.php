@@ -13,8 +13,8 @@ use Illuminate\Http\Request;
 
 // routes/api.php
 // Untuk user login (dashboard via Vue)
-Route::post('/login-user', [UserAuthController::class, 'login']);
-Route::middleware('auth:sanctum')->post('/logout-user', [UserAuthController::class, 'logout']);
+//Route::post('/login-user', [UserAuthController::class, 'login']);
+//Route::middleware('auth:sanctum')->post('/logout-user', [UserAuthController::class, 'logout']);
 Route::post('/register-user', [RegisterController::class, 'registerUser']);
 Route::middleware('auth:sanctum')->post('/register-member', [RegisterController::class, 'registerMember']);
 
