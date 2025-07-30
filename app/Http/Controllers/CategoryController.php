@@ -4,11 +4,25 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Category;
+
 class CategoryController extends Controller
 {
     public function index(Request $request)
     {
         return Category::where('user_id', $request->user()->id)->get();
+    }
+
+    public function show(Request $request, $id)
+    {
+        $user = $request->user();
+
+        // Load budgets juga untuk kategori ini
+        $category = Category::where('user_id', $user->id)
+            ->where('id', $id)
+            ->with('budgets') // include budgets in response
+            ->firstOrFail();
+
+        return response()->json($category);
     }
 
     public function store(Request $request)
@@ -25,7 +39,9 @@ class CategoryController extends Controller
 
     public function update(Request $request, $id)
     {
-        $category = Category::where('id', $id)->where('user_id', $request->user()->id)->firstOrFail();
+        $category = Category::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
 
         $category->update($request->validate([
             'name' => 'sometimes|string',
@@ -37,10 +53,12 @@ class CategoryController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        $category = Category::where('id', $id)->where('user_id', $request->user()->id)->firstOrFail();
+        $category = Category::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
         $category->delete();
 
         return response()->json(['message' => 'Deleted']);
     }
 }
-

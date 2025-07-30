@@ -6,6 +6,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\BudgetController;
 use Illuminate\Http\Request;
 
 // routes/api.php
@@ -32,4 +33,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Category management
     Route::apiResource('categories', CategoryController::class);
 
+    // Budget management
+    Route::apiResource('/budgets', BudgetController::class);
 });
