@@ -12,13 +12,26 @@ class TransactionController extends Controller
     public function index(Request $request)
     {
         $member = auth('sanctum')->user();
+        $user = $request->user();
 
         if (!$member instanceof Member) {
             return response()->json(['message' => 'Unauthorized.'], 401);
         }
 
-        $transactions = Transaction::where('user_id', $member->user_id)
-            ->with('member')
+        $transactions = Transaction::where('user_id', $user->id)
+            ->when($request->member_id, fn($q) =>
+                $q->where('member_id', $request->member_id))
+            ->when($request->category, fn($q) =>
+                $q->where('category', $request->category))
+            ->when($request->account_id, fn($q) =>
+                $q->where('account_id', $request->account_id))
+            ->when($request->type, fn($q) =>
+                $q->where('type', $request->type))
+            ->when($request->date_from, fn($q) =>
+                $q->whereDate('date', '>=', $request->date_from))
+            ->when($request->date_to, fn($q) =>
+                $q->whereDate('date', '<=', $request->date_to))
+            ->with(['member', 'account']) // pastikan relasi account ada
             ->latest()
             ->get();
 

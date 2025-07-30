@@ -9,24 +9,28 @@ class AccountController extends Controller
 {
     public function index(Request $request)
     {
-        $member = $request->user();
+        $user = $request->user();
 
-        $accounts = Account::where('member_id', $member->id)->get();
+        $accounts = Account::whereIn('member_id', $user->members->pluck('id'))->get();
 
         return response()->json($accounts);
     }
 
     public function store(Request $request)
     {
-        $member = $request->user();
+        $user = $request->user();
 
         $data = $request->validate([
+            'member_id' => 'required|exists:members,id',
             'name' => 'required|string|max:100',
             'type' => 'required|in:bank,wallet',
             'balance' => 'required|numeric|min:0',
         ]);
 
-        $data['member_id'] = $member->id;
+        // Validasi bahwa member milik user yang sedang login
+        if (! $user->members->pluck('id')->contains($data['member_id'])) {
+            return response()->json(['message' => 'Unauthorized member.'], 403);
+        }
 
         $account = Account::create($data);
 
@@ -35,10 +39,10 @@ class AccountController extends Controller
 
     public function show(Request $request, $id)
     {
-        $member = $request->user();
+        $user = $request->user();
 
-        $account = Account::where('member_id', $member->id)
-            ->where('id', $id)
+        $account = Account::where('id', $id)
+            ->whereIn('member_id', $user->members->pluck('id'))
             ->firstOrFail();
 
         return response()->json($account);
@@ -46,10 +50,10 @@ class AccountController extends Controller
 
     public function update(Request $request, $id)
     {
-        $member = $request->user();
+        $user = $request->user();
 
-        $account = Account::where('member_id', $member->id)
-            ->where('id', $id)
+        $account = Account::where('id', $id)
+            ->whereIn('member_id', $user->members->pluck('id'))
             ->firstOrFail();
 
         $data = $request->validate([
@@ -65,10 +69,10 @@ class AccountController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        $member = $request->user();
+        $user = $request->user();
 
-        $account = Account::where('member_id', $member->id)
-            ->where('id', $id)
+        $account = Account::where('id', $id)
+            ->whereIn('member_id', $user->members->pluck('id'))
             ->firstOrFail();
 
         $account->delete();
