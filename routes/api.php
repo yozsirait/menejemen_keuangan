@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 
 
 Route::post('/login-user', [UserAuthController::class, 'login']);
-Route::post('/login-member', [MemberAuthController::class, 'login']);
+//Route::post('/login-member', [MemberAuthController::class, 'login']);
 Route::post('/register-user', [RegisterController::class, 'registerUser']);
 Route::middleware('auth:sanctum')->post('/register-member', [RegisterController::class, 'registerMember']);
 // routes/api.php
