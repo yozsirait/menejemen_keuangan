@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\User;
 
+use App\Http\Controllers\Controller;
 use App\Models\Budget;
 use App\Models\Category;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 
 class BudgetController extends Controller
 {
@@ -14,6 +14,13 @@ class BudgetController extends Controller
         return Budget::with('category')
             ->where('user_id', $request->user()->id)
             ->get();
+    }
+
+    public function show(Request $request, $id)
+    {
+        return Budget::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
     }
 
     public function store(Request $request)
@@ -31,14 +38,16 @@ class BudgetController extends Controller
             ->firstOrFail();
 
         if ($category->type !== 'expense') {
-            return response()->json(['message' => 'Only expense categories can have budgets.'], 422);
+            return response()->json([
+                'message' => 'Only expense categories can have budgets.'
+            ], 422);
         }
 
         $budget = Budget::updateOrCreate(
             [
                 'user_id' => $user->id,
                 'category_id' => $category->id,
-                'month' => $data['month']
+                'month' => $data['month'],
             ],
             ['amount' => $data['amount']]
         );
@@ -50,13 +59,7 @@ class BudgetController extends Controller
     {
         $budget = Budget::where('id', $id)
             ->where('user_id', $request->user()->id)
-            ->with('category')
             ->firstOrFail();
-
-        // Tambahan validasi agar kategori masih tipe expense
-        if ($budget->category->type !== 'expense') {
-            return response()->json(['message' => 'Only expense category budgets can be updated.'], 422);
-        }
 
         $data = $request->validate([
             'amount' => 'required|numeric|min:0',
@@ -64,7 +67,7 @@ class BudgetController extends Controller
 
         $budget->update($data);
 
-        return response()->json($budget);
+        return $budget;
     }
 
     public function destroy(Request $request, $id)

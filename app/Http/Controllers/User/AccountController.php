@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\User;
 
-use App\Models\Account;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Account;
+use App\Models\Member;
+use Illuminate\Http\Request;
 
 class AccountController extends Controller
 {
@@ -12,7 +13,11 @@ class AccountController extends Controller
     {
         $user = $request->user();
 
-        $accounts = Account::whereIn('member_id', $user->members->pluck('id'))->get();
+        $accounts = Account::whereIn('member_id', function ($query) use ($user) {
+            $query->select('id')
+                ->from('members')
+                ->where('user_id', $user->id);
+        })->with('member')->get();
 
         return response()->json($accounts);
     }
@@ -28,12 +33,17 @@ class AccountController extends Controller
             'balance' => 'required|numeric|min:0',
         ]);
 
-        // Validasi bahwa member milik user yang sedang login
-        if (! $user->members->pluck('id')->contains($data['member_id'])) {
-            return response()->json(['message' => 'Unauthorized member.'], 403);
-        }
+        // Pastikan member milik user
+        $member = Member::where('id', $data['member_id'])
+            ->where('user_id', $user->id)
+            ->firstOrFail();
 
-        $account = Account::create($data);
+        $account = Account::create([
+            'member_id' => $member->id,
+            'name' => $data['name'],
+            'type' => $data['type'],
+            'balance' => $data['balance'],
+        ]);
 
         return response()->json($account, 201);
     }
@@ -42,8 +52,11 @@ class AccountController extends Controller
     {
         $user = $request->user();
 
-        $account = Account::where('id', $id)
-            ->whereIn('member_id', $user->members->pluck('id'))
+        $account = Account::with('member')
+            ->whereHas('member', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->where('id', $id)
             ->firstOrFail();
 
         return response()->json($account);
@@ -53,8 +66,10 @@ class AccountController extends Controller
     {
         $user = $request->user();
 
-        $account = Account::where('id', $id)
-            ->whereIn('member_id', $user->members->pluck('id'))
+        $account = Account::whereHas('member', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->where('id', $id)
             ->firstOrFail();
 
         $data = $request->validate([
@@ -72,8 +87,10 @@ class AccountController extends Controller
     {
         $user = $request->user();
 
-        $account = Account::where('id', $id)
-            ->whereIn('member_id', $user->members->pluck('id'))
+        $account = Account::whereHas('member', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->where('id', $id)
             ->firstOrFail();
 
         $account->delete();

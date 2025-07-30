@@ -2,28 +2,15 @@
 
 namespace App\Http\Controllers\User;
 
-use Illuminate\Http\Request;
-use App\Models\Category;
 use App\Http\Controllers\Controller;
+use App\Models\Category;
+use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
     public function index(Request $request)
     {
         return Category::where('user_id', $request->user()->id)->get();
-    }
-
-    public function show(Request $request, $id)
-    {
-        $user = $request->user();
-
-        // Load budgets juga untuk kategori ini
-        $category = Category::where('user_id', $user->id)
-            ->where('id', $id)
-            ->with('budgets') // include budgets in response
-            ->firstOrFail();
-
-        return response()->json($category);
     }
 
     public function store(Request $request)
@@ -38,16 +25,25 @@ class CategoryController extends Controller
         return Category::create($data);
     }
 
+    public function show(Request $request, $id)
+    {
+        return Category::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+    }
+
     public function update(Request $request, $id)
     {
         $category = Category::where('id', $id)
             ->where('user_id', $request->user()->id)
             ->firstOrFail();
 
-        $category->update($request->validate([
+        $data = $request->validate([
             'name' => 'sometimes|string',
             'type' => 'sometimes|in:income,expense',
-        ]));
+        ]);
+
+        $category->update($data);
 
         return $category;
     }
