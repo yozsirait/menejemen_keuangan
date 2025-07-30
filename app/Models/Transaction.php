@@ -9,12 +9,14 @@ class Transaction extends Model
     protected $fillable = [
         'user_id',
         'member_id',
+        'account_id',
         'type',
         'category',
         'amount',
         'description',
         'date',
     ];
+
 
 
     public function user()
@@ -26,5 +28,8 @@ class Transaction extends Model
     {
         return $this->belongsTo(Member::class);
     }
-
+    public function account()
+    {
+        return $this->belongsTo(Account::class);
+    }
 }

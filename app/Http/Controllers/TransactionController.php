@@ -4,15 +4,20 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Transaction;
+use App\Models\Account;
 use App\Models\Member;
 
 class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        $user = $request->user();
+        $member = auth('sanctum')->user();
 
-        $transactions = Transaction::where('user_id', $user->id)
+        if (!$member instanceof Member) {
+            return response()->json(['message' => 'Unauthorized.'], 401);
+        }
+
+        $transactions = Transaction::where('user_id', $member->user_id)
             ->with('member')
             ->latest()
             ->get();
@@ -22,62 +27,67 @@ class TransactionController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'member_id'   => 'required|exists:members,id',
-            'type'        => 'required|in:income,expense',
-            'category'    => 'required|string',
-            'amount'      => 'required|numeric|min:0',
+        $member = auth('sanctum')->user();
+
+        if (!$member instanceof Member) {
+            return response()->json(['message' => 'Unauthorized.'], 401);
+        }
+
+        $validated = $request->validate([
+            'account_id' => 'nullable|exists:accounts,id',
+            'type' => 'required|in:income,expense',
+            'category' => 'required|string',
+            'amount' => 'required|numeric',
             'description' => 'nullable|string',
-            'date'        => 'required|date',
+            'date' => 'required|date',
         ]);
 
-        $user = $request->user();
-        $member = Member::findOrFail($request->member_id);
-
-        if ($member->user_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
+        if ($validated['account_id'] ?? false) {
+            $account = Account::where('id', $validated['account_id'])
+                ->where('member_id', $member->id)
+                ->firstOrFail();
         }
 
         $transaction = Transaction::create([
-            'user_id'     => $user->id,
-            'member_id'   => $member->id,
-            'type'        => $request->type,
-            'category'    => $request->category,
-            'amount'      => $request->amount,
-            'description' => $request->description,
-            'date'        => $request->date,
+            'user_id' => $member->user_id,
+            'member_id' => $member->id,
+            'account_id' => $validated['account_id'] ?? null,
+            'type' => $validated['type'],
+            'category' => $validated['category'],
+            'amount' => $validated['amount'],
+            'description' => $validated['description'] ?? null,
+            'date' => $validated['date'],
         ]);
 
         return response()->json($transaction, 201);
     }
 
-    public function show(Request $request, $id)
-    {
-        $user = $request->user();
-
-        $transaction = Transaction::where('id', $id)
-            ->where('user_id', $user->id)
-            ->with('member')
-            ->firstOrFail();
-
-        return response()->json($transaction);
-    }
-
     public function update(Request $request, $id)
     {
-        $user = $request->user();
+        $member = auth('sanctum')->user();
+
+        if (!$member instanceof Member) {
+            return response()->json(['message' => 'Unauthorized.'], 401);
+        }
 
         $transaction = Transaction::where('id', $id)
-            ->where('user_id', $user->id)
+            ->where('user_id', $member->user_id)
             ->firstOrFail();
 
         $validated = $request->validate([
-            'type'        => 'sometimes|in:income,expense',
-            'category'    => 'sometimes|string',
-            'amount'      => 'sometimes|numeric|min:0',
+            'account_id' => 'nullable|exists:accounts,id',
+            'type' => 'sometimes|in:income,expense',
+            'category' => 'sometimes|string',
+            'amount' => 'sometimes|numeric|min:0',
             'description' => 'nullable|string',
-            'date'        => 'sometimes|date',
+            'date' => 'sometimes|date',
         ]);
+
+        if (isset($validated['account_id'])) {
+            $account = Account::where('id', $validated['account_id'])
+                ->where('member_id', $member->id)
+                ->firstOrFail();
+        }
 
         $transaction->update($validated);
 
@@ -86,10 +96,14 @@ class TransactionController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        $user = $request->user();
+        $member = auth('sanctum')->user();
+
+        if (!$member instanceof Member) {
+            return response()->json(['message' => 'Unauthorized.'], 401);
+        }
 
         $transaction = Transaction::where('id', $id)
-            ->where('user_id', $user->id)
+            ->where('user_id', $member->user_id)
             ->firstOrFail();
 
         $transaction->delete();

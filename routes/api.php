@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\MemberAuthController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\DashboardSummaryController;
@@ -49,6 +50,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Budget management
     Route::apiResource('/budgets', BudgetController::class);
+
+    // Account management
+    Route::apiResource('/accounts', AccountController::class);
 
     Route::middleware('auth:sanctum')->get('/dashboard/summary', [DashboardSummaryController::class, 'index']);
 });
