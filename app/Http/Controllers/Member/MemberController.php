@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Member\Member;
 
 use Illuminate\Http\Request;
 use App\Models\Member;
+use App\Http\Controllers\Controller;
 
 class MemberController extends Controller
 {

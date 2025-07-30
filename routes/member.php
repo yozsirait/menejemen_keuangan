@@ -3,13 +3,13 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\UserAuthController;
 use App\Http\Controllers\Auth\MemberAuthController;
-use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\Member\TransactionController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\MemberController;
-use App\Http\Controllers\AccountController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\BudgetController;
-use App\Http\Controllers\DashboardSummaryController;
+use App\Http\Controllers\Member\AccountController;
+use App\Http\Controllers\Member\CategoryController;
+use App\Http\Controllers\Member\BudgetController;
+use App\Http\Controllers\Member\DashboardSummaryController;
 use Illuminate\Http\Request;
 
 // routes/api.php

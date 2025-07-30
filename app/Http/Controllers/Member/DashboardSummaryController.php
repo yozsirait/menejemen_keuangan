@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Member;
 
 use Illuminate\Http\Request;
 use App\Models\Transaction;
 use App\Models\Budget;
 use Carbon\Carbon;
+use App\Http\Controllers\Controller;
 
 class DashboardSummaryController extends Controller
 {
