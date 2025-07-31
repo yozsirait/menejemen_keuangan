@@ -38,7 +38,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('categories', CategoryController::class);
 
     // Budget management
-    Route::apiResource('budgets', BudgetController::class);
+    
+    Route::get('categories/{category}/budgets', [BudgetController::class, 'index']);
+    Route::post('categories/{category}/budgets', [BudgetController::class, 'store']);
+    Route::get('categories/{category}/budgets/{id}', [BudgetController::class, 'show']);
+    Route::put('categories/{category}/budgets/{id}', [BudgetController::class, 'update']);
+    Route::delete('categories/{category}/budgets/{id}', [BudgetController::class, 'destroy']);
+    
+
 
     // Account management
     Route::apiResource('accounts', AccountController::class);

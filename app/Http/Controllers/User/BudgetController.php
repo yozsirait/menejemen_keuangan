@@ -9,44 +9,49 @@ use Illuminate\Http\Request;
 
 class BudgetController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, $categoryId)
     {
         $user = $request->user();
-
         $month = $request->query('month') ?? now()->format('Y-m');
 
-        return Budget::with('category')
-            ->where('user_id', $user->id)
+        $category = Category::where('user_id', $user->id)
+            ->where('id', $categoryId)
+            ->where('type', 'expense')
+            ->firstOrFail();
+
+        return Budget::where('user_id', $user->id)
+            ->where('category_id', $category->id)
             ->where('month', $month)
             ->get();
     }
 
-    public function show(Request $request, $id)
+    public function show(Request $request, $categoryId, $id)
     {
+        $user = $request->user();
+
+        $category = Category::where('user_id', $user->id)
+            ->where('id', $categoryId)
+            ->firstOrFail();
+
         return Budget::where('id', $id)
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
+            ->where('category_id', $category->id)
             ->firstOrFail();
     }
 
-    public function store(Request $request)
+    public function store(Request $request, $categoryId)
     {
         $user = $request->user();
 
         $data = $request->validate([
-            'category_id' => 'required|exists:categories,id',
             'amount' => 'required|numeric|min:0',
             'month' => 'required|date_format:Y-m',
         ]);
 
-        $category = Category::where('id', $data['category_id'])
+        $category = Category::where('id', $categoryId)
             ->where('user_id', $user->id)
+            ->where('type', 'expense')
             ->firstOrFail();
-
-        if ($category->type !== 'expense') {
-            return response()->json([
-                'message' => 'Only expense categories can have budgets.'
-            ], 422);
-        }
 
         $budget = Budget::updateOrCreate(
             [
@@ -60,10 +65,17 @@ class BudgetController extends Controller
         return response()->json($budget, 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, $categoryId, $id)
     {
+        $user = $request->user();
+
+        $category = Category::where('id', $categoryId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
         $budget = Budget::where('id', $id)
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
+            ->where('category_id', $category->id)
             ->firstOrFail();
 
         $data = $request->validate([
@@ -72,13 +84,20 @@ class BudgetController extends Controller
 
         $budget->update($data);
 
-        return $budget;
+        return response()->json($budget);
     }
 
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, $categoryId, $id)
     {
+        $user = $request->user();
+
+        $category = Category::where('id', $categoryId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
         $budget = Budget::where('id', $id)
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
+            ->where('category_id', $category->id)
             ->firstOrFail();
 
         $budget->delete();

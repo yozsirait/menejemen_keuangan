@@ -13,13 +13,30 @@ class MemberController extends Controller
     {
         $user = $request->user();
 
-        // Ambil semua member milik user yang sedang login
         $members = Member::where('user_id', $user->id)->get();
 
         Log::info('User ID:', ['id' => $user->id]);
         Log::info('Members:', Member::where('user_id', $user->id)->pluck('name')->toArray());
 
         return response()->json($members);
+    }
+
+    public function store(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'role' => 'nullable|string|max:255',
+        ]);
+
+        $member = new Member();
+        $member->user_id = $user->id;
+        $member->name = $validated['name'];
+        $member->role = $validated['role'] ?? null;
+        $member->save();
+
+        return response()->json($member, 201);
     }
 
     public function show($id, Request $request)
@@ -52,5 +69,4 @@ class MemberController extends Controller
 
         return response()->json(['message' => 'Member deleted successfully.']);
     }
-
 }
