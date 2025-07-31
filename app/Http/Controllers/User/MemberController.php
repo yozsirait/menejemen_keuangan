@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use Illuminate\Http\Request;
 use App\Models\Member;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 
 class MemberController extends Controller
 {
@@ -14,6 +15,9 @@ class MemberController extends Controller
 
         // Ambil semua member milik user yang sedang login
         $members = Member::where('user_id', $user->id)->get();
+
+        Log::info('User ID:', ['id' => $user->id]);
+        Log::info('Members:', Member::where('user_id', $user->id)->pluck('name')->toArray());
 
         return response()->json($members);
     }
