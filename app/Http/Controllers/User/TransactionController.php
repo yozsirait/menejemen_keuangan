@@ -23,7 +23,7 @@ class TransactionController extends Controller
         $user = $request->user();
 
         $transactions = Transaction::where('user_id', $user->id)
-            ->with(['member', 'account'])
+            ->with(['member', 'account', 'category'])
             ->latest()
             ->get();
 
@@ -36,7 +36,7 @@ class TransactionController extends Controller
             'member_id' => 'required|exists:members,id',
             'account_id' => 'nullable|exists:accounts,id',
             'type' => 'required|in:income,expense',
-            'category' => 'required|string',
+            'category_id' => 'required|exists:categories,id',
             'amount' => 'required|numeric',
             'description' => 'nullable|string',
             'date' => 'required|date',
@@ -60,7 +60,7 @@ class TransactionController extends Controller
             'member_id' => $member->id,
             'account_id' => $request->account_id,
             'type' => $request->type,
-            'category' => $request->category,
+            'category_id' => $request->category_id,
             'amount' => $request->amount,
             'description' => $request->description,
             'date' => $request->date,
@@ -88,7 +88,7 @@ class TransactionController extends Controller
         $validated = $request->validate([
             'account_id' => 'nullable|exists:accounts,id',
             'type' => 'sometimes|in:income,expense',
-            'category' => 'sometimes|string',
+            'category_id' => 'sometimes|exists:categories,id',
             'amount' => 'sometimes|numeric|min:0',
             'description' => 'nullable|string',
             'date' => 'sometimes|date',
