@@ -97,4 +97,18 @@ class AccountController extends Controller
 
         return response()->json(['message' => 'Deleted']);
     }
+
+    public function checkBalance($id, Request $request)
+    {
+        $user = $request->user();
+
+        $account = Account::where('id', $id)
+            ->whereHas('member', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->firstOrFail();
+
+        return response()->json(['balance' => $account->balance]);
+    }
+
 }

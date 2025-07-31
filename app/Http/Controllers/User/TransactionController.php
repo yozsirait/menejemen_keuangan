@@ -67,6 +67,15 @@ class TransactionController extends Controller
         ]);
 
         if ($account) {
+            if ($request->type === 'expense' && $request->amount > $account->balance) {
+                return response()->json([
+                    'message' => 'Insufficient account balance for this expense.'
+                ], 422);
+            }
+        }
+
+        // Apply balance change
+        if ($account) {
             $this->balanceService->applyTransaction($account, $transaction->type, $transaction->amount);
         }
 
@@ -102,6 +111,26 @@ class TransactionController extends Controller
             }
         }
 
+        // Cek apakah account_id/type/amount diubah
+        $newAccountId = $validated['account_id'] ?? $transaction->account_id;
+        $newType = $validated['type'] ?? $transaction->type;
+        $newAmount = $validated['amount'] ?? $transaction->amount;
+
+        if ($newAccountId && $newType === 'expense') {
+            $account = Account::find($newAccountId);
+            if ($account && $newAmount > $account->balance) {
+                // Rollback balance revert (biar nggak ngaco saldo sebelumnya)
+                if ($oldAccountId && $oldAccount) {
+                    $this->balanceService->applyTransaction($oldAccount, $oldType, $oldAmount);
+                }
+
+                return response()->json([
+                    'message' => 'Insufficient account balance for this updated expense.'
+                ], 422);
+            }
+        }
+
+        // Update data
         $transaction->update($validated);
 
         // Apply new balance
@@ -114,6 +143,7 @@ class TransactionController extends Controller
 
         return response()->json($transaction);
     }
+
 
     public function destroy(Request $request, $id)
     {

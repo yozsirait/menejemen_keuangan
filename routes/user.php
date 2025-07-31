@@ -49,6 +49,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Account management
     Route::apiResource('accounts', AccountController::class);
-
+    Route::get('accounts/{id}/balance', [AccountController::class, 'checkBalance']);
     Route::middleware('auth:sanctum')->get('/dashboard/summary', [DashboardSummaryController::class, 'index']);
 });

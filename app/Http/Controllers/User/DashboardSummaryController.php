@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use Illuminate\Http\Request;
 use App\Models\Transaction;
 use App\Models\Budget;
+use App\Models\Account;
 use Carbon\Carbon;
 use App\Http\Controllers\Controller;
 
@@ -27,20 +28,26 @@ class DashboardSummaryController extends Controller
         $totalIncome = $totals['income'] ?? 0;
         $totalExpense = $totals['expense'] ?? 0;
 
-        // Budget per kategori untuk bulan ini
+        // Total saldo dari semua akun user
+        $totalAccountBalance = Account::whereHas('member', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->sum('balance');
+
+        // Budget per kategori bulan ini
         $budgets = Budget::with('category')
             ->where('user_id', $user->id)
             ->where('month', Carbon::now()->format('Y-m'))
             ->get()
             ->map(function ($budget) use ($user, $startOfMonth, $endOfMonth) {
                 $spent = Transaction::where('user_id', $user->id)
-                    ->where('category', $budget->category->name)
+                    ->where('category_id', $budget->category_id)
                     ->where('type', 'expense')
                     ->whereBetween('date', [$startOfMonth, $endOfMonth])
                     ->sum('amount');
 
                 return [
-                    'category' => $budget->category->name,
+                    'category_id' => $budget->category_id,
+                    'category_name' => $budget->category->name,
                     'budgeted' => $budget->amount,
                     'spent' => $spent,
                     'remaining' => $budget->amount - $spent,
@@ -51,6 +58,8 @@ class DashboardSummaryController extends Controller
         return response()->json([
             'total_income' => $totalIncome,
             'total_expense' => $totalExpense,
+            'total_account_balance' => $totalAccountBalance,
+            'balance' => $totalAccountBalance - $totalExpense,
             'budget_summary' => $budgets,
         ]);
     }
